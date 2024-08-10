@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time is: 00:00:00</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #282c34;
+            color: #61dafb;
+            font-family: Arial, sans-serif;
+        }
+
+        #time {
+            font-size: 20vw; /* Font size based on viewport width */
+            text-align: center;
+            transition: font-size 0.2s;
+            width: 90%; /* Takes 90% of the viewport width */
+        }
+
+        #timezone-container {
+            position: fixed;
+            top: 5px;  
+            right: 50px; 
+            display: none;
+            flex-direction: column;
+            align-items: flex-end;
+            width: 300px;
+            background-color: #282c34;
+            padding: 10px;
+        }
+
+        #timezone-search,
+        #timezone-selector {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+
+        #timezone-search {
+            margin-bottom: 10px;
+            background-color: #fff;
+            color: #000;
+            border: 1px solid #61dafb;
+            border-radius: 5px;
+        }
+
+        #timezone-selector {
+            background-color: #61dafb;
+            color: #282c34;
+            border: none;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        #toggle-button {
+            position: fixed;
+            top: 5px;
+            right: 5px;
+            background-color: transparent;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1000; 
+        }
+
+        #toggle-button img {
+            width: 40px; 
+            height: auto;
+        }
+
+        #full-button {
+            position: fixed;
+            top: 55px;
+            right: 5px;
+            background-color: transparent;
+            border: none;
+            border-radius: 5px;
+            padding: 10px;
+            cursor: pointer;
+            z-index: 1000; 
+        }
+
+        #full-button img {
+            width: 40px; 
+            height: auto;
+        }
+
+        input[type="text"]:active,
+        input[type="text"]:focus-visible {
+            outline: none; 
+            box-shadow: none;
+        }
+
+        @media (max-width: 768px) {
+            #time {
+                font-size: 15vw; /* Adjusted font size for smaller screens */
+            }
+
+            #timezone-container {
+                width: 90%;
+                right: 30px; 
+                left: 0;
+                margin: 0 auto;
+                top: 10px; 
+                padding: 5px;
+            }
+
+            #timezone-search,
+            #timezone-selector {
+                font-size: 0.9rem;
+            }
+
+            #toggle-button {
+                right: 0;
+                padding-right: 5px;
+            }
+
+            #toggle-button img {
+                width: 30px; 
+            }
+
+            #full-button {
+                right: 0;
+                top: 40px;
+                padding-right: 5px;
+            }
+
+            #full-button img {
+                width: 30px; 
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="toggle-button">
+        <img id="toggle-icon" src="https://img.icons8.com/?size=100&id=2969&format=png&color=61dafb" alt="Nastavit časové pásmo">
+    </button>
+
+    <button id="full-button">
+        <img id="full-icon" src="https://img.icons8.com/?size=100&id=38797&format=png&color=61dafb" alt="Fullscreen">
+    </button>
+
+    <div id="timezone-container">
+        <input type="text" id="timezone-search" placeholder="Search for a state or time zone...">
+        <select id="timezone-selector">
+            <!-- Možnosti budou dynamicky generovány skriptem -->
+        </select>
+    </div>
+
+    <div id="time">00:00:00</div>
+
+    <script>
+        const timezones = Intl.supportedValuesOf('timeZone');
+
+        const timezoneSelector = document.getElementById('timezone-selector');
+        const searchInput = document.getElementById('timezone-search');
+        const timeDisplay = document.getElementById('time');
+        const timezoneContainer = document.getElementById('timezone-container');
+        const toggleButton = document.getElementById('toggle-button');
+        const fullButton = document.getElementById('full-button');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const fullIcon = document.getElementById('full-icon');
+
+        function updateUrl() {
+            const timezone = timezoneSelector.value;
+            const params = new URLSearchParams();
+            if (timezone) params.set('timezone', timezone);
+            window.history.replaceState({}, '', `${location.pathname}?${params}`);
+        }
+
+        function populateTimezones(filter = '') {
+            timezoneSelector.innerHTML = '';
+
+            timezones
+                .filter(timezone => timezone.toLowerCase().includes(filter.toLowerCase()))
+                .forEach(timezone => {
+                    const option = document.createElement('option');
+                    option.value = timezone;
+                    option.textContent = timezone;
+                    timezoneSelector.appendChild(option);
+                });
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            populateTimezones(e.target.value);
+            updateUrl(); // Ensure URL updates based on search input
+        });
+
+        function updateTime() {
+            const timezone = timezoneSelector.value;
+            if (!timezone) return;
+            const now = new Date().toLocaleString('en-US', { timeZone: timezone });
+            const currentTime = new Date(now);
+            const hours = String(currentTime.getHours()).padStart(2, '0');
+            const minutes = String(currentTime.getMinutes()).padStart(2, '0');
+            const seconds = String(currentTime.getSeconds()).padStart(2, '0');
+            const timeString = `${hours}:${minutes}:${seconds}`;
+            timeDisplay.textContent = timeString;
+
+            document.title = `Time is: ${timeString}`;
+        }
+
+        timezoneSelector.addEventListener('change', () => {
+            updateTime();
+            updateUrl();
+        });
+
+        function initializeFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const timezone = params.get('timezone');
+
+            populateTimezones(); // Fill the select with all timezones initially
+
+            if (timezone && timezones.includes(timezone)) {
+                timezoneSelector.value = timezone;
+            } else {
+                timezoneSelector.value = timezones[0]; // Default to the first timezone if not valid
+            }
+
+            updateTime(); // Update the time based on the parameters
+        }
+
+        initializeFromUrl();
+        setInterval(updateTime, 1000);
+
+        toggleButton.addEventListener('click', () => {
+            if (timezoneContainer.style.display === 'none' || timezoneContainer.style.display === '') {
+                timezoneContainer.style.display = 'flex';
+                toggleIcon.src = 'https://img.icons8.com/?size=100&id=71200&format=png&color=61dafb'; // Icon to hide
+            } else {
+                timezoneContainer.style.display = 'none';
+                toggleIcon.src = 'https://img.icons8.com/?size=100&id=2969&format=png&color=61dafb'; // Icon to show
+            }
+        });
+
+        function toggleFullScreen() {
+            if (document.fullscreenElement) {
+                document.exitFullscreen();
+                fullIcon.src = 'https://img.icons8.com/?size=100&id=38797&format=png&color=61dafb'; // Enter fullscreen
+            } else {
+                document.documentElement.requestFullscreen();
+                fullIcon.src = 'https://img.icons8.com/?size=100&id=71200&format=png&color=61dafb'; // Exit fullscreen
+            }
+        }
+
+        fullButton.addEventListener('click', toggleFullScreen);
+    </script>
+</body>
+</html>
