@@ -162,23 +162,17 @@
             }
 
             #full-button {
-                right: 0;
-                top: 40px;
-                padding-right: 5px;
-            }
-
-            #full-button img {
-                width: 30px; 
+                display: none;
             }
         }
     </style>
 </head>
 <body>
-    <button id="toggle-button" title="Timezone settings">
+    <button id="toggle-button" title="Settings">
         <img id="toggle-icon" class="icon" src="https://img.icons8.com/?size=100&id=2969&format=png&color=61dafb" alt="Timezone settings">
     </button>
 
-    <button id="full-button" title="Fullscreen mode">
+    <button id="full-button" title="Fullscreen">
         <img id="full-icon" class="icon" src="https://img.icons8.com/?size=100&id=38797&format=png&color=61dafb" alt="Fullscreen mode">
     </button>
 
@@ -199,7 +193,6 @@
 
     <script>
         const timezones = Intl.supportedValuesOf('timeZone');
-
         const timezoneSelector = document.getElementById('timezone-selector');
         const searchInput = document.getElementById('timezone-search');
         const timeDisplay = document.getElementById('time');
@@ -209,6 +202,11 @@
         const toggleIcon = document.getElementById('toggle-icon');
         const fullIcon = document.getElementById('full-icon');
         const colorSelector = document.getElementById('color-selector');
+
+        let isTimezoneContainerVisible = false;
+        let currentColorHex = '61dafb'; // Default color
+        const toggleIconVisibleSrc = `https://img.icons8.com/?size=100&id=2969&format=png&color=${currentColorHex}`;
+        const toggleIconHiddenSrc = `https://img.icons8.com/?size=100&id=71200&format=png&color=${currentColorHex}`;
 
         function updateUrl() {
             const timezone = timezoneSelector.value.replace(/\//g, '-'); // Nahradí všechny výskyty '/' s '-'
@@ -277,7 +275,7 @@
                     break;
                 case 'red':
                     bgColor = '#342828'; // Background color
-                    textColor = '#873232'; // Text color
+                    textColor = '#f76060'; // Text color
                     break;
             }
 
@@ -291,9 +289,11 @@
             document.body.style.color = textColor;
 
             // Update icon colors based on textColor
-            const colorHex = textColor.replace('#', '');
-            toggleIcon.src = `https://img.icons8.com/?size=100&id=2969&format=png&color=${colorHex}`;
-            fullIcon.src = `https://img.icons8.com/?size=100&id=38797&format=png&color=${colorHex}`;
+            currentColorHex = textColor.replace('#', '');
+            toggleIcon.src = isTimezoneContainerVisible 
+                ? toggleIconHiddenSrc.replace(/color=[^&]+/, `color=${currentColorHex}`)
+                : toggleIconVisibleSrc.replace(/color=[^&]+/, `color=${currentColorHex}`);
+            fullIcon.src = fullIcon.src.replace(/color=[^&]+/, `color=${currentColorHex}`);
         }
 
         colorSelector.addEventListener('change', (e) => {
@@ -335,25 +335,28 @@
         toggleButton.addEventListener('click', () => {
             if (timezoneContainer.style.display === 'none' || timezoneContainer.style.display === '') {
                 timezoneContainer.style.display = 'flex';
-                // No URL or color change
+                toggleIcon.src = toggleIconHiddenSrc.replace(/color=[^&]+/, `color=${currentColorHex}`); // Change to new icon
+                isTimezoneContainerVisible = true;
             } else {
                 timezoneContainer.style.display = 'none';
-                // No URL or color change
+                toggleIcon.src = toggleIconVisibleSrc.replace(/color=[^&]+/, `color=${currentColorHex}`); // Revert to original icon
+                isTimezoneContainerVisible = false;
             }
+            updateUrl(); // Ensure URL updates based on container visibility
         });
 
         function toggleFullScreen() {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-                // Keep fullscreen icon the same
-            } else {
-                document.documentElement.requestFullscreen();
-                // Keep fullscreen icon the same
-            }
-        }
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+        fullIcon.src = `https://img.icons8.com/?size=100&id=38797&format=png&color=${currentColorHex}`; // Zpět na původní ikonu
+    } else {
+        document.documentElement.requestFullscreen();
+        fullIcon.src = `https://img.icons8.com/?size=100&id=71200&format=png&color=${currentColorHex}`; // Změna na novou ikonu
+    }
+}
 
-        fullButton.addEventListener('click', toggleFullScreen);
-            
+fullButton.addEventListener('click', toggleFullScreen);
+
     </script>
 </body>
 </html>
