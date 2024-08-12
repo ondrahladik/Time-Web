@@ -2,7 +2,7 @@
 
 This website was created as part of a project https://amaradio.eu [AmaRadio.eu], since the whole code is interesting, I decided to publish it separately as well.
 
-## Funkce
+## Function
 
 The main function of this site is to display the time. The time is obtained with the user's device. You can also display the time in any time zone. The website offers four color themes.
 
